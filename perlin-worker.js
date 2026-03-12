@@ -5,6 +5,7 @@
  */
 
 // 1. Definición de Paletas Quantum (Integradas para evitar problemas de importación en GitHub Pages)
+importScripts('colors.js');
 const Palettes = {
     QuantumNeon: (val) => ({
         r: 0,
@@ -100,4 +101,5 @@ self.onmessage = function(e) {
         width, 
         height 
     }, [imgData.buffer]);
+
 };
