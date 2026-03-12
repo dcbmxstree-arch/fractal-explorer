@@ -1,46 +1,18 @@
-// 1. Intentar importar las paletas
-try {
-    importScripts('colors.js');
-} catch (e) {
-    console.error("Error cargando colors.js, usando fallback local");
-}
-
-// 2. Fallback: Si colors.js no cargó, definimos una paleta básica para que no de error
-if (!self.Palettes) {
-    self.Palettes = {
-        QuantumNeon: (val) => ({ r: 0, g: val * 242, b: val * 255 })
-    };
-}
-
-self.onmessage = function(e) {
-    const { width, height, parameters, viewPort, paletteName } = e.data;
-    
-    // Usamos la paleta desde el ámbito global (self)
-    const selectedPalette = self.Palettes[paletteName] || self.Palettes.QuantumNeon;
-    
-    // ... resto del código del bucle ...
 /**
- * PERLIN-WORKER.JS - Versión de Alta Estabilidad
+ * PERLIN-WORKER.JS - Edición Laboratorio Aeroespacial
  */
 
-// Intentamos importar paletas externas, si falla usamos las integradas
+// Intentamos importar paletas externas
 try {
     importScripts('colors.js');
 } catch (e) {
-    console.log("Usando paletas integradas");
+    console.warn("Usando paletas integradas por fallo en colors.js");
 }
 
-const Palettes = {
-    QuantumNeon: (val) => ({
-        r: 0,
-        g: Math.pow(val, 2) * 242,
-        b: val * 255
-    }),
-    Thermal: (val) => ({
-        r: val * 255,
-        g: Math.pow(val, 4) * 255,
-        b: (1 - val) * 50
-    }),
+// Definición local de seguridad (Fallback)
+const Palettes = self.Palettes || {
+    QuantumNeon: (val) => ({ r: 0, g: Math.pow(val, 2) * 242, b: val * 255 }),
+    Thermal: (val) => ({ r: val * 255, g: Math.pow(val, 4) * 255, b: (1 - val) * 50 }),
     DeepSpace: (val) => {
         const v = Math.pow(val, 1.5) * 255;
         return { r: v * 0.4, g: v * 0.2, b: v };
@@ -53,10 +25,8 @@ function noise2D(x, y, seed) {
 }
 
 function smoothNoise(x, y, seed) {
-    const X = Math.floor(x);
-    const Y = Math.floor(y);
-    const fx = x - X;
-    const fy = y - Y;
+    const X = Math.floor(x); const Y = Math.floor(y);
+    const fx = x - X; const fy = y - Y;
     const v1 = noise2D(X, Y, seed);
     const v2 = noise2D(X + 1, Y, seed);
     const v3 = noise2D(X, Y + 1, seed);
@@ -72,51 +42,35 @@ self.onmessage = function(e) {
     const { centerX, centerY, zoom } = viewPort;
 
     const imgData = new Uint8ClampedArray(width * height * 4);
-    
-    // Verificación de paleta para evitar errores de referencia
-    let selectedPalette = Palettes[paletteName];
-    if (!selectedPalette && typeof getPalette === 'function') {
-        selectedPalette = getPalette(paletteName);
-    }
-    if (!selectedPalette) selectedPalette = Palettes.QuantumNeon;
+    const selectedPalette = Palettes[paletteName] || Palettes.QuantumNeon;
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             let nx = (x - width / 2) / zoom + centerX;
             let ny = (y - height / 2) / zoom + centerY;
-
-            let totalNoise = 0;
-            let amplitude = 1;
-            let frequency = 1;
-            let maxAmplitude = 0;
+            let totalNoise = 0; let amp = 1; let freq = 1; let maxAmp = 0;
 
             for (let i = 0; i < octaves; i++) {
-                totalNoise += smoothNoise(nx * frequency, ny * frequency, seed) * amplitude;
-                maxAmplitude += amplitude;
-                amplitude *= persistence;
-                frequency *= lacunarity;
+                totalNoise += smoothNoise(nx * freq, ny * freq, seed) * amp;
+                maxAmp += amp; amp *= persistence; freq *= lacunarity;
             }
 
-            let normNoise = (totalNoise / maxAmplitude + 1) / 2;
-            normNoise = Math.pow(Math.max(0, Math.min(1, normNoise)), 1.2);
+            let norm = Math.pow((totalNoise / maxAmp + 1) / 2, 1.2);
+            const color = selectedPalette(Math.max(0, Math.min(1, norm)));
+            const idx = (x + y * width) * 4;
 
-            const color = selectedPalette(normNoise);
-            const index = (x + y * width) * 4;
-
-            imgData[index]     = color.r;
-            imgData[index + 1] = color.g;
-            imgData[index + 2] = color.b;
-            imgData[index + 3] = 255;
+            imgData[idx] = color.r;
+            imgData[idx + 1] = color.g;
+            imgData[idx + 2] = color.b;
+            imgData[idx + 3] = 255;
         }
     }
 
-    // Enviamos una COPIA del buffer. Esto consume un poco más de memoria
-    // pero garantiza que 'lastRenderedBuffer' en main.js sea persistente.
-    const bufferCopy = imgData.buffer.slice(0);
+    // CRÍTICO: No usamos transferencia directa para permitir la persistencia en main.js
     self.postMessage({ 
-        imgData: bufferCopy, 
+        imgData: imgData, // Enviamos el Array directamente, no el .buffer
         width, 
         height 
-    }, [bufferCopy]);
+    });
 };
 
