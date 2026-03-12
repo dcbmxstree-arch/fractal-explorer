@@ -1,3 +1,24 @@
+// 1. Intentar importar las paletas
+try {
+    importScripts('colors.js');
+} catch (e) {
+    console.error("Error cargando colors.js, usando fallback local");
+}
+
+// 2. Fallback: Si colors.js no cargó, definimos una paleta básica para que no de error
+if (!self.Palettes) {
+    self.Palettes = {
+        QuantumNeon: (val) => ({ r: 0, g: val * 242, b: val * 255 })
+    };
+}
+
+self.onmessage = function(e) {
+    const { width, height, parameters, viewPort, paletteName } = e.data;
+    
+    // Usamos la paleta desde el ámbito global (self)
+    const selectedPalette = self.Palettes[paletteName] || self.Palettes.QuantumNeon;
+    
+    // ... resto del código del bucle ...
 /**
  * PERLIN-WORKER.JS - Versión de Alta Estabilidad
  */
@@ -98,3 +119,4 @@ self.onmessage = function(e) {
         height 
     }, [bufferCopy]);
 };
+
