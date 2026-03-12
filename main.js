@@ -1,13 +1,11 @@
-// --- CONFIGURACIÓN INICIAL ---
+// --- CONFIGURACIÓN DE ALTA PERSISTENCIA ---
 const canvas = document.getElementById('fractalCanvas');
+const ctx = canvas.getContext('2d', { alpha: false }); // 'alpha: false' ayuda a evitar transparencias negras
 
-/** * CORRECCIÓN: Se añade 'willReadFrequently' para asegurar que el buffer 
- * no se limpie y permita capturas de imagen consistentes.
- */
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-// Asegúrate de que este nombre coincida exactamente con tu archivo en GitHub
 const worker = new Worker('perlin-worker.js'); 
+
+// MEMORIA DE RESPALDO: Aquí guardaremos físicamente los píxeles calculados
+let lastRenderedBuffer = null; 
 
 let state = {
     simulation: { fractalType: 'PerlinClouds' },
@@ -31,23 +29,25 @@ function updateSimulation() {
     });
 }
 
-// Recibir datos del Worker y pintar
+// RECEPTOR DE DATOS MEJORADO
 worker.onmessage = function(e) {
     const { imgData, width, height } = e.data;
-    // Creamos la imagen a partir del buffer recibido
-    const imageData = new ImageData(new Uint8ClampedArray(imgData), width, height);
+    
+    // 1. Guardamos una copia en RAM del buffer recibido
+    lastRenderedBuffer = new Uint8ClampedArray(imgData);
+    
+    // 2. Pintamos en el canvas visible
+    const imageData = new ImageData(lastRenderedBuffer, width, height);
     ctx.putImageData(imageData, 0, 0);
 };
 
 // --- CONEXIÓN DE CONTROLES DEL HUD ---
 
-// 1. Sliders de Parámetros
 const octRange = document.getElementById('octavesRange');
 if(octRange) {
     octRange.addEventListener('input', (e) => {
         state.parameters.perlin.octaves = parseInt(e.target.value);
-        const valDisplay = document.getElementById('octavesVal');
-        if(valDisplay) valDisplay.innerText = e.target.value;
+        document.getElementById('octavesVal').innerText = e.target.value;
         updateSimulation();
     });
 }
@@ -56,13 +56,11 @@ const persRange = document.getElementById('persRange');
 if(persRange) {
     persRange.addEventListener('input', (e) => {
         state.parameters.perlin.persistence = parseFloat(e.target.value);
-        const valDisplay = document.getElementById('persVal');
-        if(valDisplay) valDisplay.innerText = e.target.value;
+        document.getElementById('persVal').innerText = e.target.value;
         updateSimulation();
     });
 }
 
-// 2. Botones de Paleta (NEON, THERM, SPACE)
 const paletteButtons = document.querySelectorAll('.palette-btn');
 paletteButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -73,39 +71,49 @@ paletteButtons.forEach(btn => {
     });
 });
 
-// 3. Botón de Captura (CORREGIDO)
+// --- NUEVA LÓGICA DE CAPTURA POR RECONSTRUCCIÓN ---
 const captureBtn = document.getElementById('captureBtn');
 if(captureBtn) {
     captureBtn.addEventListener('click', () => {
+        // Si no hay nada en el buffer, el worker aún no ha terminado
+        if (!lastRenderedBuffer) {
+            console.warn("Buffer vacío: el sistema aún está calculando.");
+            return;
+        }
+
         try {
-            // Generar enlace de descarga
+            // Creamos un canvas "fantasma" que solo existe en memoria
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Reconstruimos la imagen desde el buffer guardado en RAM
+            const exportData = new ImageData(lastRenderedBuffer, canvas.width, canvas.height);
+            tempCtx.putImageData(exportData, 0, 0);
+
             const link = document.createElement('a');
             const timestamp = new Date().getTime();
-            link.download = `FRACTAL_LAB_DATA_${timestamp}.png`;
+            link.download = `FRACTAL_DATA_${timestamp}.png`;
             
-            /**
-             * Al usar willReadFrequently arriba, toDataURL ahora debería 
-             * obtener los datos correctos del buffer de la GPU.
-             */
-            link.href = canvas.toDataURL("image/png");
+            // Obtenemos la URL del canvas fantasma (que garantizamos tiene datos)
+            link.href = tempCanvas.toDataURL("image/png");
             
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // Feedback visual de éxito
+            // Feedback visual
             const originalText = captureBtn.innerText;
             captureBtn.innerText = "DATA_GUARDADA";
             captureBtn.style.color = "#00ff00";
-            
             setTimeout(() => {
                 captureBtn.innerText = originalText;
                 captureBtn.style.color = "var(--neon-cyan)";
             }, 2000);
 
         } catch (error) {
-            console.error("Error al capturar el Canvas:", error);
-            captureBtn.innerText = "ERROR_CAPTURA";
+            console.error("Error en la extracción de datos:", error);
         }
     });
 }
@@ -117,5 +125,4 @@ window.addEventListener('resize', () => {
     updateSimulation();
 });
 
-// Inicio automático al cargar
 window.dispatchEvent(new Event('resize'));
