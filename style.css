@@ -1,3 +1,32 @@
+/* --- CONFIGURACIÓN GLOBAL --- */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #020202; /* Fondo negro profundo para que resalte el neón */
+    overflow: hidden;         /* Evita barras de desplazamiento */
+    display: flex;
+}
+
+#fractalCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;               /* El fractal siempre al fondo */
+    background-color: #000;
+}
+
+#hud-overlay {
+    z-index: 100;             /* El panel siempre al frente */
+}
+
+/* --- TU CÓDIGO EXISTENTE SIGUE AQUÍ --- */
+:root {
+    --neon-cyan: #00f2ff;
+    ...
 :root {
     --neon-cyan: #00f2ff;
     --glass-bg: rgba(0, 20, 30, 0.4);
@@ -99,4 +128,5 @@ input[type="range"] {
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
+
 }
