@@ -1,49 +1,65 @@
-<div id="hud-overlay">
-    <aside class="glass-panel">
-        <header>
-            <div class="status-dot"></div>
-            <h2>FRACTAL_LAB_v1.0</h2>
-        </header>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRACTAL_LAB_v1.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="fractalCanvas"></canvas>
 
-        <section class="control-group">
-            <h3>SIMULACIÓN</h3>
-            <div class="control-item">
-                <label>TIPO_FRACTAL</label>
-                <select id="fractalSelect">
-                    <option value="Mandelbrot">MANDELBROT</option>
-                    <option value="PerlinClouds">NUBES_PERLIN</option>
-                    <option value="Julia">CONJUNTO_JULIA</option>
-                </select>
-            </div>
-        </section>
+    <div id="hud-overlay">
+        <aside class="glass-panel">
+            <header>
+                <div class="status-dot"></div>
+                <h2>FRACTAL_LAB_v1.0</h2>
+            </header>
 
-        <section class="control-group">
-            <h3>PARÁMETROS_NUBE</h3>
-            <div class="control-item">
-                <label>OCTAVAS: <span id="octavesVal">6</span></label>
-                <input type="range" id="octavesRange" min="1" max="12" value="6">
-            </div>
-            <div class="control-item">
-                <label>PERSISTENCIA: <span id="persVal">0.5</span></label>
-                <input type="range" id="persRange" min="0" max="1" step="0.1" value="0.5">
-            </div>
-        </section>
-
-        <section class="control-group">
-            <h3>VISUALIZACIÓN</h3>
-            <div class="control-item">
-                <label>MODO_ESPECTRO</label>
-                <div class="palette-grid">
-                    <button class="palette-btn active" data-palette="QuantumNeon">NEON</button>
-                    <button class="palette-btn" data-palette="Thermal">THERM</button>
-                    <button class="palette-btn" data-palette="DeepSpace">SPACE</button>
+            <section class="control-group">
+                <h3>SIMULACIÓN</h3>
+                <div class="control-item">
+                    <label>TIPO_FRACTAL</label>
+                    <select id="fractalSelect">
+                        <option value="Mandelbrot">MANDELBROT</option>
+                        <option value="PerlinClouds">NUBES_PERLIN</option>
+                        <option value="Julia">CONJUNTO_JULIA</option>
+                    </select>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <footer>
-            <div class="coords">X: <span id="coordX">0.00</span> | Y: <span id="coordY">0.00</span></div>
-            <button id="captureBtn" class="action-btn">CAPTURAR_DATA</button>
-        </footer>
-    </aside>
-</div>
+            <section class="control-group">
+                <h3>PARÁMETROS_NUBE</h3>
+                <div class="control-item">
+                    <label>OCTAVAS: <span id="octavesVal">6</span></label>
+                    <input type="range" id="octavesRange" min="1" max="12" value="6">
+                </div>
+                <div class="control-item">
+                    <label>PERSISTENCIA: <span id="persVal">0.5</span></label>
+                    <input type="range" id="persRange" min="0" max="1" step="0.1" value="0.5">
+                </div>
+            </section>
+
+            <section class="control-group">
+                <h3>VISUALIZACIÓN</h3>
+                <div class="control-item">
+                    <label>MODO_ESPECTRO</label>
+                    <div class="palette-grid">
+                        <button class="palette-btn active" data-palette="QuantumNeon">NEON</button>
+                        <button class="palette-btn" data-palette="Thermal">THERM</button>
+                        <button class="palette-btn" data-palette="DeepSpace">SPACE</button>
+                    </div>
+                </div>
+            </section>
+
+            <footer>
+                <div class="coords">X: <span id="coordX">0.00</span> | Y: <span id="coordY">0.00</span></div>
+                <button id="captureBtn" class="action-btn">CAPTURAR_DATA</button>
+            </footer>
+        </aside>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
